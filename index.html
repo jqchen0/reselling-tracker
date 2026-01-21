@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Reseller Tracker">
+  <title>Reseller Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    .container { max-width: 600px; margin: 0 auto; }
+    
+    h1 { font-size: 24px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+    
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .header-buttons { display: flex; gap: 8px; }
+    .icon-btn {
+      background: none; border: none; padding: 8px; color: #64748b; cursor: pointer;
+      border-radius: 8px;
+    }
+    .icon-btn:hover { background: #f1f5f9; }
+    
+    .tabs {
+      display: flex; background: #e2e8f0; border-radius: 8px; padding: 4px; margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1; padding: 10px; border: none; background: none; font-size: 14px;
+      font-weight: 500; color: #64748b; border-radius: 6px; cursor: pointer;
+    }
+    .tab.active { background: white; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    .card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
+      margin-bottom: 16px;
+    }
+    
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .stats-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .stat-value { font-size: 24px; font-weight: 600; color: #1e293b; }
+    .stat-value.profit { color: #10b981; }
+    .stat-value.loss { color: #ef4444; }
+    .stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+    
+    .btn-primary {
+      width: 100%; padding: 14px; background: #7c3aed; color: white;
+      border: none; border-radius: 12px; font-size: 16px; font-weight: 500;
+      cursor: pointer; margin-bottom: 20px;
+    }
+    .btn-primary:hover { background: #6d28d9; }
+    
+    .sale-entry {
+      background: white; border-radius: 12px; padding: 16px;
+      border: 1px solid #e2e8f0; margin-bottom: 12px;
+    }
+    .sale-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .sale-item { font-size: 16px; font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+    .sale-details { font-size: 13px; color: #64748b; }
+    .sale-platform {
+      font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 500;
+    }
+    .sale-numbers { text-align: right; }
+    .sale-profit { font-size: 18px; font-weight: 600; }
+    .sale-profit.positive { color: #10b981; }
+    .sale-profit.negative { color: #ef4444; }
+    .sale-sold { font-size: 12px; color: #64748b; }
+    .sale-breakdown { font-size: 12px; color: #94a3b8; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+    .sale-actions { display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; margin-top: 8px; }
+    .sale-actions button {
+      background: none; border: none; font-size: 14px; cursor: pointer; padding: 4px;
+    }
+    .btn-edit { color: #64748b; }
+    .btn-delete { color: #f87171; }
+    
+    /* Platform colors */
+    .platform-poshmark { background: #f0e6e6; color: #c13584; }
+    .platform-ebay { background: #e6f0e6; color: #0064d2; }
+    .platform-depop { background: #ffe6e6; color: #ff2300; }
+    .platform-mercari { background: #e6f3ff; color: #4a90d9; }
+    .platform-facebook { background: #e7f3ff; color: #1877f2; }
+    .platform-other { background: #f1f5f9; color: #475569; }
+    
+    /* Form Styles */
+    .form-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center;
+    }
+    .form-overlay.active { display: flex; }
+    .form-container {
+      background: white; border-radius: 16px 16px 0 0; padding: 20px;
+      width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+    }
+    .form-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1e293b; }
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 14px; color: #475569; margin-bottom: 6px; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;
+      font-size: 16px; color: #1e293b; background: white; -webkit-appearance: none;
+      box-sizing: border-box;
+    }
+    .form-row input:focus, .form-row select:focus {
+      border-color: #94a3b8; outline: none;
+    }
+    .form-grid { display: flex; gap: 20px; }
+    .form-grid .form-row { flex: 1; }
+    .form-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    
+    .form-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .form-actions button { flex: 1; padding: 14px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    .btn-cancel { background: none; border: 1px solid #e2e8f0; color: #475569; }
+    .btn-save { background: #7c3aed; border: none; color: white; font-weight: 500; }
+    
+    /* Summary Styles */
+    .summary-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #f1f5f9; border-radius: 8px; padding: 4px; }
+    .summary-tab {
+      flex: 1; padding: 8px; border: none; background: none; font-size: 13px;
+      font-weight: 500; color: #64748b; border-radius: 6px; cursor: pointer;
+    }
+    .summary-tab.active { background: white; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    
+    .period-btns { display: flex; gap: 8px; margin-bottom: 16px; }
+    .period-btn {
+      flex: 1; padding: 10px; border: 1px solid #e2e8f0; background: white;
+      border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; color: #475569;
+    }
+    .period-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+    
+    .period-nav {
+      display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px;
+    }
+    .period-nav .nav-btn {
+      background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 8px;
+      cursor: pointer; font-size: 18px; color: #475569;
+    }
+    .period-nav .nav-btn:hover { background: #e2e8f0; }
+    #periodLabel { font-size: 16px; font-weight: 600; color: #1e293b; min-width: 140px; text-align: center; }
+    
+    /* Pie Chart Styles */
+    .pie-chart-container { display: flex; align-items: center; gap: 20px; margin-top: 12px; }
+    .pie-chart { width: 100px; height: 100px; border-radius: 50%; }
+    .pie-legend { flex: 1; }
+    .pie-legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .pie-legend-color { width: 12px; height: 12px; border-radius: 3px; }
+    .pie-legend-label { color: #475569; flex: 1; }
+    .pie-legend-value { color: #1e293b; font-weight: 500; }
+    
+    .breakdown-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .breakdown-item:last-child { border-bottom: none; }
+    .breakdown-label { font-size: 14px; color: #475569; }
+    .breakdown-value { font-size: 14px; font-weight: 600; color: #1e293b; }
+    .breakdown-value.profit { color: #10b981; }
+    .section-title { font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500; }
+    
+    /* Chart Styles */
+    .chart-container { background: white; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
+    .chart-title { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 20px; }
+    .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+    .bar { 
+      width: 100%; background: linear-gradient(to top, #7c3aed, #a78bfa); border-radius: 4px 4px 0 0;
+      min-height: 2px; transition: height 0.3s;
+    }
+    .bar-label { font-size: 9px; color: #94a3b8; margin-top: 6px; }
+    .bar-value { font-size: 9px; color: #64748b; margin-bottom: 4px; }
+    
+    /* Import Styles */
+    .import-section { margin-bottom: 20px; }
+    .import-btn {
+      display: block; width: 100%; padding: 16px; background: #f8fafc; border: 2px dashed #e2e8f0;
+      border-radius: 12px; text-align: center; cursor: pointer; color: #64748b; font-size: 14px;
+    }
+    .import-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .import-input { display: none; }
+    
+    /* Menu Styles */
+    .menu {
+      display: none; position: absolute; right: 16px; top: 60px; background: white;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
+      z-index: 50; min-width: 180px;
+    }
+    .menu.active { display: block; }
+    .menu button {
+      display: block; width: 100%; padding: 12px 16px; text-align: left;
+      background: none; border: none; font-size: 14px; color: #475569; cursor: pointer;
+    }
+    .menu button:hover { background: #f8fafc; }
+    
+    .empty { text-align: center; padding: 40px; color: #94a3b8; }
+    .empty p { margin-bottom: 4px; }
+    .empty small { font-size: 13px; }
+    
+    .confirm-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;
+    }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box {
+      background: white; border-radius: 16px; padding: 24px; margin: 20px;
+      max-width: 320px; text-align: center;
+    }
+    .confirm-title { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
+    .confirm-message { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+    .confirm-buttons { display: flex; gap: 12px; }
+    .confirm-cancel {
+      flex: 1; padding: 12px; border: 1px solid #e2e8f0; background: white;
+      border-radius: 8px; font-size: 16px; color: #475569; cursor: pointer;
+    }
+    .confirm-delete {
+      flex: 1; padding: 12px; border: none; background: #ef4444;
+      border-radius: 8px; font-size: 16px; color: white; cursor: pointer; font-weight: 500;
+    }
+    
+    @media (max-width: 360px) {
+      .form-grid { flex-direction: column; gap: 0; }
+      .stats-grid.triple { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Reseller Tracker</h1>
+        <p class="subtitle">Track your sales & profits</p>
+      </div>
+      <div class="header-buttons">
+        <button class="icon-btn" onclick="toggleMenu()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+          </svg>
+        </button>
+      </div>
+      <div class="menu" id="menu">
+        <button onclick="showImport()">Import CSV</button>
+        <button onclick="exportCSV()">Export CSV</button>
+        <button onclick="exportJSON()">Export JSON</button>
+        <button onclick="clearAllData()" style="color: #ef4444;">Clear All Data</button>
+      </div>
+    </div>
+    
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="confirm-title">Clear All Data?</div>
+        <div class="confirm-message">Are you sure you want to delete ALL sales data? This cannot be undone.</div>
+        <div class="confirm-buttons">
+          <button class="confirm-cancel" onclick="hideClearConfirm()">Cancel</button>
+          <button class="confirm-delete" onclick="confirmClearAllData()">Delete All</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" id="tabSales" onclick="showView('sales')">Sales</button>
+      <button class="tab" id="tabAnalytics" onclick="showView('analytics')">Analytics</button>
+    </div>
+    
+    <div id="salesView">
+      <div class="card">
+        <div class="stats-grid triple">
+          <div>
+            <div class="stat-value" id="totalSales">$0</div>
+            <div class="stat-label">Total Sales</div>
+          </div>
+          <div>
+            <div class="stat-value profit" id="totalProfit">$0</div>
+            <div class="stat-label">Total Profit</div>
+          </div>
+          <div>
+            <div class="stat-value" id="totalItems">0</div>
+            <div class="stat-label">Items Sold</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="btn-primary" onclick="openForm()">+ Log Sale</button>
+      
+      <div id="salesList"></div>
+    </div>
+    
+    <div id="analyticsView" style="display: none;">
+      <div class="period-btns">
+        <button class="period-btn active" onclick="setPeriod('month')">Month</button>
+        <button class="period-btn" onclick="setPeriod('year')">Year</button>
+        <button class="period-btn" onclick="setPeriod('all')">All Time</button>
+      </div>
+      
+      <div id="periodNav" class="period-nav">
+        <button class="nav-btn" onclick="changePeriod(-1)">‹</button>
+        <span id="periodLabel">January 2026</span>
+        <button class="nav-btn" onclick="changePeriod(1)">›</button>
+      </div>
+      
+      <div id="analyticsContent"></div>
+    </div>
+    
+    <div id="importView" style="display: none;">
+      <div class="card">
+        <h3 style="margin-bottom: 16px; color: #1e293b;">Import Sales Data</h3>
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">
+          Export your sales from Poshmark, eBay, or Depop and import the CSV file here.
+        </p>
+        
+        <div class="form-row">
+          <label>Platform</label>
+          <select id="importPlatform">
+            <option value="poshmark">Poshmark</option>
+            <option value="ebay">eBay</option>
+            <option value="depop">Depop</option>
+          </select>
+        </div>
+        
+        <label class="import-btn">
+          📁 Choose CSV File
+          <input type="file" class="import-input" id="csvInput" accept=".csv" onchange="handleImport(this)">
+        </label>
+        
+        <div id="importStatus" style="margin-top: 16px; font-size: 14px;"></div>
+        
+        <button class="btn-cancel" style="width: 100%; margin-top: 16px;" onclick="hideImport()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="form-overlay" id="formOverlay" onclick="closeFormOverlay(event)">
+    <div class="form-container" onclick="event.stopPropagation()">
+      <div class="form-title" id="formTitle">Log Sale</div>
+      
+      <div class="form-row">
+        <label>Platform</label>
+        <select id="formPlatform" onchange="updateFeeEstimate()">
+          <option value="Poshmark">Poshmark</option>
+          <option value="eBay">eBay</option>
+          <option value="Depop">Depop</option>
+          <option value="Mercari">Mercari</option>
+          <option value="Facebook">Facebook Marketplace</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      
+      <div class="form-row">
+        <label>Item Name</label>
+        <input type="text" id="formItem" placeholder="e.g., Nike Air Max 90">
+      </div>
+      
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Category</label>
+          <select id="formCategory">
+            <option value="Shoes">Shoes</option>
+            <option value="Tops">Tops</option>
+            <option value="Bottoms">Bottoms</option>
+            <option value="Dresses">Dresses</option>
+            <option value="Outerwear">Outerwear</option>
+            <option value="Other Clothing">Other Clothing</option>
+            <option value="Bags">Bags</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Jewelry">Jewelry</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Home">Home</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Brand (optional)</label>
+          <input type="text" id="formBrand" placeholder="e.g., Nike">
+        </div>
+      </div>
+      
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Sell Price ($)</label>
+          <input type="number" id="formSellPrice" placeholder="50.00" step="0.01" onchange="updateFeeEstimate()">
+        </div>
+        <div class="form-row">
+          <label>Original Cost ($)</label>
+          <input type="number" id="formCost" placeholder="20.00" step="0.01">
+        </div>
+      </div>
+      
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Platform Fees ($)</label>
+          <input type="number" id="formFees" placeholder="10.00" step="0.01">
+          <div class="form-hint" id="feeHint">Poshmark: 20% fee</div>
+        </div>
+        <div class="form-row">
+          <label>Shipping Cost ($)</label>
+          <input type="number" id="formShipping" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <label>Date Sold</label>
+        <input type="date" id="formDate">
+      </div>
+      
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+        <button class="btn-save" onclick="saveSale()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sales = [];
+    let editingId = null;
+    let currentPeriod = 'month';
+    let viewMonth = new Date().getMonth();
+    let viewYear = new Date().getFullYear();
+    
+    const PLATFORM_FEES = {
+      'Poshmark': 0.20,
+      'eBay': 0.13,
+      'Depop': 0.10,
+      'Mercari': 0.10,
+      'Facebook': 0.05,
+      'Other': 0
+    };
+    
+    function init() {
+      const saved = localStorage.getItem('reseller-sales');
+      if (saved) {
+        sales = JSON.parse(saved);
+      }
+      render();
+    }
+    
+    function saveToStorage() {
+      localStorage.setItem('reseller-sales', JSON.stringify(sales));
+    }
+    
+    function clearAllData() {
+      if (window.confirm('Are you sure you want to delete ALL sales data? This cannot be undone.')) {
+        sales = [];
+        localStorage.removeItem('reseller-sales');
+        localStorage.clear();
+        saveToStorage();
+        render();
+        location.reload();
+      }
+    }
+    
+    function render() {
+      renderSales();
+      updateStats();
+    }
+    
+    function renderSales() {
+      const list = document.getElementById('salesList');
+      if (sales.length === 0) {
+        list.innerHTML = '<div class="empty"><p>No sales yet.</p><small>Log your first sale!</small></div>';
+        return;
+      }
+      
+      const sorted = [...sales].sort((a, b) => new Date(b.dateSold) - new Date(a.dateSold));
+      list.innerHTML = sorted.map(s => {
+        const profit = s.sellPrice - s.cost - s.fees - s.shipping;
+        const profitClass = profit >= 0 ? 'positive' : 'negative';
+        const platformClass = 'platform-' + s.platform.toLowerCase().replace(' ', '-');
+        
+        return `
+          <div class="sale-entry">
+            <div class="sale-header">
+              <div>
+                <div class="sale-item">${s.item}</div>
+                <div class="sale-details">${s.brand ? s.brand + ' · ' : ''}${s.category}</div>
+              </div>
+              <div class="sale-numbers">
+                <div class="sale-profit ${profitClass}">${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}</div>
+                <div class="sale-sold">Sold $${s.sellPrice.toFixed(2)}</div>
+              </div>
+            </div>
+            <div class="sale-breakdown">
+              <span class="sale-platform ${platformClass}">${s.platform}</span>
+              · ${formatDate(s.dateSold)} · Cost: $${s.cost.toFixed(2)} · Fees: $${s.fees.toFixed(2)}${s.shipping > 0 ? ' · Ship: $' + s.shipping.toFixed(2) : ''}
+            </div>
+            <div class="sale-actions">
+              <button class="btn-edit" onclick="editSale('${s.id}')">Edit</button>
+              <button class="btn-delete" onclick="deleteSale('${s.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function updateStats() {
+      const totalSales = sales.reduce((sum, s) => sum + s.sellPrice, 0);
+      const totalProfit = sales.reduce((sum, s) => sum + (s.sellPrice - s.cost - s.fees - s.shipping), 0);
+      
+      document.getElementById('totalSales').textContent = '$' + totalSales.toFixed(2);
+      document.getElementById('totalProfit').textContent = (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toFixed(2);
+      document.getElementById('totalProfit').className = 'stat-value ' + (totalProfit >= 0 ? 'profit' : 'loss');
+      document.getElementById('totalItems').textContent = sales.length;
+    }
+    
+    function formatDate(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    function showView(view) {
+      document.getElementById('tabSales').classList.toggle('active', view === 'sales');
+      document.getElementById('tabAnalytics').classList.toggle('active', view === 'analytics');
+      document.getElementById('salesView').style.display = view === 'sales' ? 'block' : 'none';
+      document.getElementById('analyticsView').style.display = view === 'analytics' ? 'block' : 'none';
+      document.getElementById('importView').style.display = 'none';
+      if (view === 'analytics') {
+        updatePeriodLabel();
+        document.getElementById('periodNav').style.display = currentPeriod === 'all' ? 'none' : 'flex';
+        renderAnalytics();
+      }
+    }
+    
+    function setPeriod(period) {
+      currentPeriod = period;
+      // Reset to current month/year when switching
+      viewMonth = new Date().getMonth();
+      viewYear = new Date().getFullYear();
+      
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().replace(' ', '') === period);
+      });
+      
+      // Show/hide navigation for month and year views
+      document.getElementById('periodNav').style.display = period === 'all' ? 'none' : 'flex';
+      
+      updatePeriodLabel();
+      renderAnalytics();
+    }
+    
+    function changePeriod(delta) {
+      if (currentPeriod === 'month') {
+        viewMonth += delta;
+        if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      } else if (currentPeriod === 'year') {
+        viewYear += delta;
+      }
+      updatePeriodLabel();
+      renderAnalytics();
+    }
+    
+    function updatePeriodLabel() {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      if (currentPeriod === 'month') {
+        document.getElementById('periodLabel').textContent = `${monthNames[viewMonth]} ${viewYear}`;
+      } else if (currentPeriod === 'year') {
+        document.getElementById('periodLabel').textContent = `${viewYear}`;
+      }
+    }
+    
+    function getFilteredSales() {
+      if (currentPeriod === 'month') {
+        return sales.filter(s => {
+          const d = new Date(s.dateSold);
+          return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+        });
+      } else if (currentPeriod === 'year') {
+        return sales.filter(s => {
+          const d = new Date(s.dateSold);
+          return d.getFullYear() === viewYear;
+        });
+      } else {
+        return sales;
+      }
+    }
+    
+    function renderAnalytics() {
+      const filtered = getFilteredSales();
+      
+      const totalSales = filtered.reduce((sum, s) => sum + s.sellPrice, 0);
+      const totalCost = filtered.reduce((sum, s) => sum + s.cost, 0);
+      const totalFees = filtered.reduce((sum, s) => sum + s.fees, 0);
+      const totalShipping = filtered.reduce((sum, s) => sum + s.shipping, 0);
+      const totalProfit = totalSales - totalCost - totalFees - totalShipping;
+      const avgProfit = filtered.length > 0 ? totalProfit / filtered.length : 0;
+      
+      // By platform
+      const byPlatform = {};
+      filtered.forEach(s => {
+        if (!byPlatform[s.platform]) byPlatform[s.platform] = { sales: 0, profit: 0, count: 0 };
+        byPlatform[s.platform].sales += s.sellPrice;
+        byPlatform[s.platform].profit += s.sellPrice - s.cost - s.fees - s.shipping;
+        byPlatform[s.platform].count++;
+      });
+      
+      // By category
+      const byCategory = {};
+      filtered.forEach(s => {
+        if (!byCategory[s.category]) byCategory[s.category] = { sales: 0, profit: 0, count: 0 };
+        byCategory[s.category].sales += s.sellPrice;
+        byCategory[s.category].profit += s.sellPrice - s.cost - s.fees - s.shipping;
+        byCategory[s.category].count++;
+      });
+      
+      const platformsSorted = Object.entries(byPlatform).sort((a, b) => b[1].profit - a[1].profit);
+      const categoriesSorted = Object.entries(byCategory).sort((a, b) => b[1].profit - a[1].profit);
+      
+      // Platform colors
+      const platformColors = {
+        'Poshmark': '#c13584',
+        'eBay': '#0064d2',
+        'Depop': '#ff2300',
+        'Mercari': '#4a90d9',
+        'Facebook': '#1877f2',
+        'Other': '#64748b'
+      };
+      
+      // Category colors
+      const categoryColors = {
+        'Shoes': '#8b5cf6',
+        'Tops': '#ec4899',
+        'Bottoms': '#3b82f6',
+        'Dresses': '#f43f5e',
+        'Outerwear': '#6366f1',
+        'Other Clothing': '#a855f7',
+        'Bags': '#f59e0b',
+        'Accessories': '#10b981',
+        'Jewelry': '#eab308',
+        'Electronics': '#64748b',
+        'Home': '#14b8a6',
+        'Other': '#94a3b8'
+      };
+      
+      // Create pie chart for platforms
+      let platformPieHtml = '';
+      if (platformsSorted.length > 0) {
+        const platformTotal = platformsSorted.reduce((sum, [_, d]) => sum + d.sales, 0);
+        let gradientParts = [];
+        let currentPercent = 0;
+        platformsSorted.forEach(([platform, data]) => {
+          const percent = (data.sales / platformTotal) * 100;
+          const color = platformColors[platform] || '#64748b';
+          gradientParts.push(`${color} ${currentPercent}% ${currentPercent + percent}%`);
+          currentPercent += percent;
+        });
+        
+        platformPieHtml = `
+          <div class="pie-chart-container">
+            <div class="pie-chart" style="background: conic-gradient(${gradientParts.join(', ')})"></div>
+            <div class="pie-legend">
+              ${platformsSorted.slice(0, 5).map(([platform, data]) => `
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background: ${platformColors[platform] || '#64748b'}"></div>
+                  <span class="pie-legend-label">${platform}</span>
+                  <span class="pie-legend-value">$${data.sales.toFixed(0)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      // Create pie chart for categories
+      let categoryPieHtml = '';
+      if (categoriesSorted.length > 0) {
+        const categoryTotal = categoriesSorted.reduce((sum, [_, d]) => sum + d.sales, 0);
+        let gradientParts = [];
+        let currentPercent = 0;
+        categoriesSorted.forEach(([category, data]) => {
+          const percent = (data.sales / categoryTotal) * 100;
+          const color = categoryColors[category] || '#64748b';
+          gradientParts.push(`${color} ${currentPercent}% ${currentPercent + percent}%`);
+          currentPercent += percent;
+        });
+        
+        categoryPieHtml = `
+          <div class="pie-chart-container">
+            <div class="pie-chart" style="background: conic-gradient(${gradientParts.join(', ')})"></div>
+            <div class="pie-legend">
+              ${categoriesSorted.slice(0, 5).map(([category, data]) => `
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background: ${categoryColors[category] || '#64748b'}"></div>
+                  <span class="pie-legend-label">${category}</span>
+                  <span class="pie-legend-value">$${data.sales.toFixed(0)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      // Monthly/Daily bar chart based on period
+      let barChartHtml = '';
+      if (currentPeriod === 'month' && filtered.length > 0) {
+        // Daily chart for month view
+        const dailyData = {};
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+          dailyData[i] = 0;
+        }
+        filtered.forEach(s => {
+          const day = new Date(s.dateSold).getDate();
+          dailyData[day] += s.sellPrice - s.cost - s.fees - s.shipping;
+        });
+        
+        const maxProfit = Math.max(...Object.values(dailyData), 1);
+        barChartHtml = '<div class="bar-chart" style="overflow-x: auto;">';
+        for (let day = 1; day <= daysInMonth; day++) {
+          const profit = dailyData[day];
+          const height = Math.max((profit / maxProfit) * 100, profit > 0 ? 5 : 0);
+          barChartHtml += `
+            <div class="bar-group" style="min-width: 18px;">
+              <div class="bar-value">${profit > 0 ? '$' + profit.toFixed(0) : ''}</div>
+              <div class="bar" style="height: ${height}%"></div>
+              <div class="bar-label">${day}</div>
+            </div>
+          `;
+        }
+        barChartHtml += '</div>';
+      } else if (currentPeriod === 'year' && filtered.length > 0) {
+        // Monthly chart for year view
+        const monthlyData = {};
+        for (let i = 0; i < 12; i++) monthlyData[i] = 0;
+        filtered.forEach(s => {
+          const month = new Date(s.dateSold).getMonth();
+          monthlyData[month] += s.sellPrice - s.cost - s.fees - s.shipping;
+        });
+        
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const maxProfit = Math.max(...Object.values(monthlyData), 1);
+        barChartHtml = '<div class="bar-chart">';
+        for (let m = 0; m < 12; m++) {
+          const profit = monthlyData[m];
+          const height = Math.max((profit / maxProfit) * 100, profit > 0 ? 5 : 0);
+          barChartHtml += `
+            <div class="bar-group">
+              <div class="bar-value">${profit > 0 ? '$' + profit.toFixed(0) : ''}</div>
+              <div class="bar" style="height: ${height}%"></div>
+              <div class="bar-label">${monthNames[m]}</div>
+            </div>
+          `;
+        }
+        barChartHtml += '</div>';
+      } else if (currentPeriod === 'all' && filtered.length > 0) {
+        // Yearly chart for all time
+        const yearlyData = {};
+        filtered.forEach(s => {
+          const year = new Date(s.dateSold).getFullYear();
+          if (!yearlyData[year]) yearlyData[year] = 0;
+          yearlyData[year] += s.sellPrice - s.cost - s.fees - s.shipping;
+        });
+        
+        const years = Object.keys(yearlyData).sort();
+        const maxProfit = Math.max(...Object.values(yearlyData), 1);
+        barChartHtml = '<div class="bar-chart">';
+        years.forEach(year => {
+          const profit = yearlyData[year];
+          const height = Math.max((profit / maxProfit) * 100, 5);
+          barChartHtml += `
+            <div class="bar-group">
+              <div class="bar-value">$${profit.toFixed(0)}</div>
+              <div class="bar" style="height: ${height}%"></div>
+              <div class="bar-label">${year}</div>
+            </div>
+          `;
+        });
+        barChartHtml += '</div>';
+      }
+      
+      const periodLabel = currentPeriod === 'all' ? 'All Time' : '';
+      
+      document.getElementById('analyticsContent').innerHTML = `
+        <div class="card">
+          <div class="section-title">Summary</div>
+          <div class="stats-grid">
+            <div>
+              <div class="stat-value">$${totalSales.toFixed(2)}</div>
+              <div class="stat-label">Total Sales</div>
+            </div>
+            <div>
+              <div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}</div>
+              <div class="stat-label">Total Profit</div>
+            </div>
+          </div>
+          <div class="stats-grid" style="margin-top: 16px;">
+            <div>
+              <div class="stat-value">${filtered.length}</div>
+              <div class="stat-label">Items Sold</div>
+            </div>
+            <div>
+              <div class="stat-value ${avgProfit >= 0 ? 'profit' : 'loss'}">${avgProfit >= 0 ? '+' : ''}$${avgProfit.toFixed(2)}</div>
+              <div class="stat-label">Avg Profit/Item</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Total Costs</span>
+              <span class="breakdown-value">-$${totalCost.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Total Fees</span>
+              <span class="breakdown-value">-$${totalFees.toFixed(2)}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Total Shipping</span>
+              <span class="breakdown-value">-$${totalShipping.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+        
+        ${barChartHtml ? `
+        <div class="chart-container">
+          <div class="chart-title">Profit Over Time</div>
+          ${barChartHtml}
+        </div>
+        ` : ''}
+        
+        ${platformsSorted.length > 0 ? `
+        <div class="card">
+          <div class="section-title">Sales by Platform</div>
+          ${platformPieHtml}
+        </div>
+        ` : ''}
+        
+        ${categoriesSorted.length > 0 ? `
+        <div class="card">
+          <div class="section-title">Sales by Category</div>
+          ${categoryPieHtml}
+        </div>
+        ` : ''}
+      `;
+    }
+    
+    function openForm(id = null) {
+      editingId = id;
+      document.getElementById('formTitle').textContent = id ? 'Edit Sale' : 'Log Sale';
+      
+      if (id) {
+        const sale = sales.find(s => s.id === id);
+        document.getElementById('formPlatform').value = sale.platform;
+        document.getElementById('formItem').value = sale.item;
+        document.getElementById('formCategory').value = sale.category;
+        document.getElementById('formBrand').value = sale.brand || '';
+        document.getElementById('formSellPrice').value = sale.sellPrice;
+        document.getElementById('formCost').value = sale.cost;
+        document.getElementById('formFees').value = sale.fees;
+        document.getElementById('formShipping').value = sale.shipping;
+        document.getElementById('formDate').value = sale.dateSold;
+      } else {
+        document.getElementById('formPlatform').value = 'Poshmark';
+        document.getElementById('formItem').value = '';
+        document.getElementById('formCategory').value = 'Shoes';
+        document.getElementById('formBrand').value = '';
+        document.getElementById('formSellPrice').value = '';
+        document.getElementById('formCost').value = '';
+        document.getElementById('formFees').value = '';
+        document.getElementById('formShipping').value = '0';
+        document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
+      }
+      
+      updateFeeEstimate();
+      document.getElementById('formOverlay').classList.add('active');
+    }
+    
+    function closeForm() {
+      document.getElementById('formOverlay').classList.remove('active');
+      editingId = null;
+    }
+    
+    function closeFormOverlay(e) {
+      if (e.target === document.getElementById('formOverlay')) closeForm();
+    }
+    
+    function updateFeeEstimate() {
+      const platform = document.getElementById('formPlatform').value;
+      const sellPrice = parseFloat(document.getElementById('formSellPrice').value) || 0;
+      const feeRate = PLATFORM_FEES[platform] || 0;
+      const estimatedFee = sellPrice * feeRate;
+      
+      document.getElementById('feeHint').textContent = `${platform}: ${(feeRate * 100).toFixed(0)}% fee` + (sellPrice > 0 ? ` ≈ $${estimatedFee.toFixed(2)}` : '');
+      
+      if (sellPrice > 0 && !document.getElementById('formFees').value) {
+        document.getElementById('formFees').value = estimatedFee.toFixed(2);
+      }
+    }
+    
+    function saveSale() {
+      const sale = {
+        id: editingId || Date.now().toString(),
+        platform: document.getElementById('formPlatform').value,
+        item: document.getElementById('formItem').value,
+        category: document.getElementById('formCategory').value,
+        brand: document.getElementById('formBrand').value,
+        sellPrice: parseFloat(document.getElementById('formSellPrice').value) || 0,
+        cost: parseFloat(document.getElementById('formCost').value) || 0,
+        fees: parseFloat(document.getElementById('formFees').value) || 0,
+        shipping: parseFloat(document.getElementById('formShipping').value) || 0,
+        dateSold: document.getElementById('formDate').value
+      };
+      
+      if (!sale.item || !sale.sellPrice) {
+        alert('Please enter item name and sell price');
+        return;
+      }
+      
+      if (editingId) {
+        const idx = sales.findIndex(s => s.id === editingId);
+        sales[idx] = sale;
+      } else {
+        sales.push(sale);
+      }
+      
+      saveToStorage();
+      render();
+      closeForm();
+    }
+    
+    function editSale(id) { openForm(id); }
+    
+    function deleteSale(id) {
+      if (confirm('Delete this sale?')) {
+        sales = sales.filter(s => s.id !== id);
+        saveToStorage();
+        render();
+      }
+    }
+    
+    function toggleMenu() {
+      document.getElementById('menu').classList.toggle('active');
+    }
+    
+    function showClearConfirm() {
+      toggleMenu();
+      document.getElementById('confirmOverlay').classList.add('active');
+    }
+    
+    function hideClearConfirm() {
+      document.getElementById('confirmOverlay').classList.remove('active');
+    }
+    
+    function confirmClearAllData() {
+      hideClearConfirm();
+      sales = [];
+      localStorage.removeItem('reseller-sales');
+      localStorage.clear();
+      saveToStorage();
+      render();
+      location.reload();
+    }
+    
+    function showImport() {
+      toggleMenu();
+      document.getElementById('salesView').style.display = 'none';
+      document.getElementById('analyticsView').style.display = 'none';
+      document.getElementById('importView').style.display = 'block';
+    }
+    
+    function hideImport() {
+      document.getElementById('importView').style.display = 'none';
+      document.getElementById('salesView').style.display = 'block';
+    }
+    
+    function handleImport(input) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const platform = document.getElementById('importPlatform').value;
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          let lines = text.split('\n');
+          
+          // Find the actual header row
+          let headerIndex = 0;
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].toLowerCase();
+            // Poshmark header starts with "listing date"
+            if (platform === 'poshmark' && line.startsWith('listing date')) {
+              headerIndex = i;
+              break;
+            }
+            // eBay header starts with "listing title"
+            if (platform === 'ebay' && line.startsWith('listing title')) {
+              headerIndex = i;
+              break;
+            }
+            // Depop - adjust as needed
+            if (platform === 'depop' && (line.startsWith('description') || line.startsWith('item'))) {
+              headerIndex = i;
+              break;
+            }
+          }
+          
+          const headers = parseCSVLine(lines[headerIndex]).map(h => h.trim().toLowerCase().replace(/"/g, '').replace(/\ufeff/g, ''));
+          
+          let imported = 0;
+          
+          for (let i = headerIndex + 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            // Skip totals row and empty rows
+            if (line.toLowerCase().startsWith('totals')) continue;
+            if (line.startsWith('""')) continue;
+            if (line.startsWith(',,,')) continue;
+            
+            const values = parseCSVLine(lines[i]);
+            
+            // Skip if first value is empty
+            if (!values[0] || values[0].trim() === '' || values[0].trim() === '""') continue;
+            
+            const row = {};
+            headers.forEach((h, idx) => row[h] = values[idx]?.replace(/"/g, '').trim() || '');
+            
+            let sale = null;
+            
+            if (platform === 'poshmark') {
+              if (!row['listing title'] || row['listing title'] === '') continue;
+              sale = parsePoshmarkRow(row);
+            } else if (platform === 'ebay') {
+              if (!row['listing title'] || row['listing title'] === '') continue;
+              sale = parseEbayRow(row);
+            } else if (platform === 'depop') {
+              sale = parseDepopRow(row);
+            }
+            
+            if (sale && sale.sellPrice > 0 && sale.item && sale.item !== '') {
+              sales.push(sale);
+              imported++;
+            }
+          }
+          
+          saveToStorage();
+          render();
+          document.getElementById('importStatus').innerHTML = `<span style="color: #10b981;">✓ Imported ${imported} sales!</span>`;
+          input.value = ''; // Reset file input
+          
+          setTimeout(() => {
+            hideImport();
+            document.getElementById('importStatus').innerHTML = '';
+          }, 2000);
+          
+        } catch (err) {
+          document.getElementById('importStatus').innerHTML = `<span style="color: #ef4444;">Error: ${err.message}</span>`;
+        }
+      };
+      
+      reader.readAsText(file);
+    }
+    
+    function parseCSVLine(line) {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current);
+      return values;
+    }
+    
+    function parsePoshmarkRow(row) {
+      // Poshmark gives "Your Earnings" not fees, so we calculate fees
+      const orderPrice = parseFloat((row['order price'] || '0').replace('$', '').replace(',', '')) || 0;
+      const earnings = parseFloat((row['your earnings'] || '0').replace('$', '').replace(',', '')) || 0;
+      const shippingDiscount = parseFloat((row['seller shipping discount'] || '0').replace('$', '').replace(',', '')) || 0;
+      
+      // Fees = what Poshmark took = Order Price - Your Earnings
+      // (Shipping discount is already factored into earnings)
+      const fees = orderPrice - earnings;
+      
+      return {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        platform: 'Poshmark',
+        item: row['listing title'] || row['title'] || '',
+        category: row['subcategory'] || row['category'] || row['department'] || 'Other',
+        brand: row['brand'] || '',
+        sellPrice: orderPrice,
+        cost: parseFloat((row['cost price'] || '0').replace('$', '').replace(',', '')) || 0,
+        fees: fees > 0 ? fees : 0,
+        shipping: 0, // Poshmark buyer pays shipping, seller doesn't pay unless they offer discount
+        dateSold: parseDate(row['order date'])
+      };
+    }
+    
+    function parseEbayRow(row) {
+      // eBay format: Item sales + Shipping paid by buyer = Total sale
+      const itemSales = parseFloat((row['item sales'] || '0').replace('$', '').replace(',', '')) || 0;
+      const shippingPaidByBuyer = parseFloat((row['shipping and handling paid by buyer to you'] || '0').replace('$', '').replace(',', '')) || 0;
+      const totalSellingCosts = parseFloat((row['total selling costs'] || '0').replace('$', '').replace(',', '')) || 0;
+      const shippingLabelCost = parseFloat((row['shipping labels cost (amount you paid to buy shipping labels on ebay)'] || '0').replace('$', '').replace(',', '')) || 0;
+      
+      // Sell price = item price + shipping buyer paid to you
+      const sellPrice = itemSales + shippingPaidByBuyer;
+      
+      // Fees = Total selling costs minus shipping label cost (your actual shipping expense)
+      const fees = totalSellingCosts - shippingLabelCost;
+      
+      return {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        platform: 'eBay',
+        item: row['listing title'] || '',
+        category: 'Other', // eBay report doesn't include category
+        brand: '',
+        sellPrice: sellPrice,
+        cost: 0, // eBay doesn't track your cost
+        fees: fees > 0 ? fees : 0,
+        shipping: shippingLabelCost, // What you paid for the shipping label
+        dateSold: new Date().toISOString().split('T')[0] // eBay report doesn't include sale date per item
+      };
+    }
+    
+    function parseDepopRow(row) {
+      return {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        platform: 'Depop',
+        item: row['description'] || row['item'] || row['title'] || 'Unknown Item',
+        category: row['category'] || 'Other',
+        brand: row['brand'] || '',
+        sellPrice: parseFloat((row['item price'] || row['total'] || row['price'] || '0').replace('$', '').replace('£', '')),
+        cost: parseFloat((row['cost'] || '0').replace('$', '').replace('£', '')),
+        fees: parseFloat((row['depop fee'] || row['fee'] || '0').replace('$', '').replace('£', '')),
+        shipping: parseFloat((row['shipping'] || row['buyer paid shipping'] || '0').replace('$', '').replace('£', '')),
+        dateSold: parseDate(row['date sold'] || row['date'] || row['sale date'])
+      };
+    }
+    
+    function parseDate(dateStr) {
+      if (!dateStr) return new Date().toISOString().split('T')[0];
+      
+      // Try various formats
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+      
+      // MM/DD/YYYY
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const [m, day, y] = parts;
+        return `${y.length === 2 ? '20' + y : y}-${m.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      
+      return new Date().toISOString().split('T')[0];
+    }
+    
+    function exportCSV() {
+      toggleMenu();
+      const headers = ['Date', 'Platform', 'Item', 'Category', 'Brand', 'Sell Price', 'Cost', 'Fees', 'Shipping', 'Profit'];
+      const rows = sales.map(s => {
+        const profit = s.sellPrice - s.cost - s.fees - s.shipping;
+        return [s.dateSold, s.platform, `"${s.item}"`, s.category, s.brand, s.sellPrice, s.cost, s.fees, s.shipping, profit.toFixed(2)];
+      });
+      
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      download(csv, 'reseller-sales.csv', 'text/csv');
+    }
+    
+    function exportJSON() {
+      toggleMenu();
+      download(JSON.stringify(sales, null, 2), 'reseller-sales.json', 'application/json');
+    }
+    
+    function download(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.icon-btn') && !e.target.closest('.menu')) {
+        document.getElementById('menu').classList.remove('active');
+      }
+    });
+    
+    init();
+  </script>
+</body>
+</html>
