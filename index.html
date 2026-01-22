@@ -59,6 +59,104 @@
     }
     .btn-primary:hover { background: #6d28d9; }
     
+    /* Search and Filter Styles */
+    .search-filter-container {
+      margin-bottom: 16px;
+    }
+    .search-box {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1e293b;
+      background: white;
+    }
+    .search-box input:focus {
+      border-color: #7c3aed;
+      outline: none;
+    }
+    .search-box input::placeholder {
+      color: #94a3b8;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #475569;
+      background: white;
+      cursor: pointer;
+    }
+    .filter-select:focus {
+      border-color: #7c3aed;
+      outline: none;
+    }
+    .filter-select.active {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+    }
+    .clear-filters-btn {
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #64748b;
+      background: white;
+      cursor: pointer;
+    }
+    .clear-filters-btn:hover {
+      background: #f1f5f9;
+    }
+    .sort-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .sort-label {
+      font-size: 14px;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .sort-select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #475569;
+      background: white;
+      cursor: pointer;
+    }
+    .sort-select:focus {
+      border-color: #7c3aed;
+      outline: none;
+    }
+    .results-count {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    
     .sale-entry {
       background: white; border-radius: 12px; padding: 16px;
       border: 1px solid #e2e8f0; margin-bottom: 12px;
@@ -88,6 +186,7 @@
     .platform-depop { background: #ffe6e6; color: #ff2300; }
     .platform-mercari { background: #e6f3ff; color: #4a90d9; }
     .platform-facebook { background: #e7f3ff; color: #1877f2; }
+    .platform-offerup { background: #e8f5e9; color: #00ab6c; }
     .platform-other { background: #f1f5f9; color: #475569; }
     
     /* Form Styles */
@@ -223,6 +322,8 @@
     @media (max-width: 360px) {
       .form-grid { flex-direction: column; gap: 0; }
       .stats-grid.triple { grid-template-columns: 1fr 1fr; }
+      .filter-row { flex-direction: column; }
+      .filter-select { min-width: 100%; }
     }
   </style>
 </head>
@@ -284,6 +385,58 @@
       
       <button class="btn-primary" onclick="openForm()">+ Log Sale</button>
       
+      <!-- Search, Filter, and Sort Section -->
+      <div class="search-filter-container">
+        <div class="search-box">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search by item name..." oninput="applyFilters()">
+        </div>
+        <div class="filter-row">
+          <select class="filter-select" id="filterPlatform" onchange="applyFilters()">
+            <option value="">All Platforms</option>
+            <option value="Poshmark">Poshmark</option>
+            <option value="eBay">eBay</option>
+            <option value="Depop">Depop</option>
+            <option value="Mercari">Mercari</option>
+            <option value="Facebook">Facebook</option>
+            <option value="OfferUp">OfferUp</option>
+            <option value="Other">Other</option>
+          </select>
+          <select class="filter-select" id="filterCategory" onchange="applyFilters()">
+            <option value="">All Categories</option>
+            <option value="Shoes">Shoes</option>
+            <option value="Tops">Tops</option>
+            <option value="Bottoms">Bottoms</option>
+            <option value="Dresses">Dresses</option>
+            <option value="Outerwear">Outerwear</option>
+            <option value="Other Clothing">Other Clothing</option>
+            <option value="Bags">Bags</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Jewelry">Jewelry</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Home">Home</option>
+            <option value="Other">Other</option>
+          </select>
+          <button class="clear-filters-btn" onclick="clearFilters()">Clear</button>
+        </div>
+        <div class="sort-row">
+          <label class="sort-label">Sort by:</label>
+          <select class="sort-select" id="sortBy" onchange="applyFilters()">
+            <option value="date-desc">Date (Newest)</option>
+            <option value="date-asc">Date (Oldest)</option>
+            <option value="profit-desc">Profit (High to Low)</option>
+            <option value="profit-asc">Profit (Low to High)</option>
+            <option value="price-desc">Sale Price (High to Low)</option>
+            <option value="price-asc">Sale Price (Low to High)</option>
+            <option value="cost-desc">Cost (High to Low)</option>
+            <option value="cost-asc">Cost (Low to High)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="resultsCount" class="results-count"></div>
       <div id="salesList"></div>
     </div>
     
@@ -343,6 +496,7 @@
           <option value="Depop">Depop</option>
           <option value="Mercari">Mercari</option>
           <option value="Facebook">Facebook Marketplace</option>
+          <option value="OfferUp">OfferUp</option>
           <option value="Other">Other</option>
         </select>
       </div>
@@ -418,12 +572,21 @@
     let viewMonth = new Date().getMonth();
     let viewYear = new Date().getFullYear();
     
+    // Current filter state
+    let currentFilters = {
+      search: '',
+      platform: '',
+      category: '',
+      sortBy: 'date-desc'
+    };
+    
     const PLATFORM_FEES = {
       'Poshmark': 0.20,
       'eBay': 0.13,
       'Depop': 0.10,
       'Mercari': 0.10,
       'Facebook': 0.05,
+      'OfferUp': 0,
       'Other': 0
     };
     
@@ -455,15 +618,118 @@
       updateStats();
     }
     
+    // Apply all filters and return filtered sales
+    function getFilteredSalesForDisplay() {
+      let filtered = [...sales];
+      
+      // Search filter
+      if (currentFilters.search) {
+        const searchLower = currentFilters.search.toLowerCase();
+        filtered = filtered.filter(s => 
+          s.item.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Platform filter
+      if (currentFilters.platform) {
+        filtered = filtered.filter(s => s.platform === currentFilters.platform);
+      }
+      
+      // Category filter
+      if (currentFilters.category) {
+        filtered = filtered.filter(s => s.category === currentFilters.category);
+      }
+      
+      // Apply sorting
+      const [sortField, sortDir] = currentFilters.sortBy.split('-');
+      filtered.sort((a, b) => {
+        let valA, valB;
+        
+        switch (sortField) {
+          case 'date':
+            valA = new Date(a.dateSold);
+            valB = new Date(b.dateSold);
+            break;
+          case 'profit':
+            valA = a.sellPrice - a.cost - a.fees - a.shipping;
+            valB = b.sellPrice - b.cost - b.fees - b.shipping;
+            break;
+          case 'price':
+            valA = a.sellPrice;
+            valB = b.sellPrice;
+            break;
+          case 'cost':
+            valA = a.cost;
+            valB = b.cost;
+            break;
+          default:
+            valA = new Date(a.dateSold);
+            valB = new Date(b.dateSold);
+        }
+        
+        if (sortDir === 'asc') {
+          return valA - valB;
+        } else {
+          return valB - valA;
+        }
+      });
+      
+      return filtered;
+    }
+    
+    // Apply filters when user changes any filter
+    function applyFilters() {
+      currentFilters.search = document.getElementById('searchInput').value;
+      currentFilters.platform = document.getElementById('filterPlatform').value;
+      currentFilters.category = document.getElementById('filterCategory').value;
+      currentFilters.sortBy = document.getElementById('sortBy').value;
+      
+      // Update active state on filter selects
+      document.getElementById('filterPlatform').classList.toggle('active', currentFilters.platform !== '');
+      document.getElementById('filterCategory').classList.toggle('active', currentFilters.category !== '');
+      
+      renderSales();
+    }
+    
+    // Clear all filters
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterPlatform').value = '';
+      document.getElementById('filterCategory').value = '';
+      document.getElementById('sortBy').value = 'date-desc';
+      
+      currentFilters = { search: '', platform: '', category: '', sortBy: 'date-desc' };
+      
+      document.querySelectorAll('.filter-select').forEach(el => el.classList.remove('active'));
+      
+      renderSales();
+    }
+    
     function renderSales() {
       const list = document.getElementById('salesList');
+      const resultsCount = document.getElementById('resultsCount');
+      const filtered = getFilteredSalesForDisplay();
+      
+      // Show results count if any filter is active
+      const hasFilters = currentFilters.search || currentFilters.platform || currentFilters.category || currentFilters.brand;
+      if (hasFilters) {
+        resultsCount.textContent = `Showing ${filtered.length} of ${sales.length} sales`;
+      } else {
+        resultsCount.textContent = '';
+      }
+      
       if (sales.length === 0) {
         list.innerHTML = '<div class="empty"><p>No sales yet.</p><small>Log your first sale!</small></div>';
         return;
       }
       
-      const sorted = [...sales].sort((a, b) => new Date(b.dateSold) - new Date(a.dateSold));
-      list.innerHTML = sorted.map(s => {
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty"><p>No matching sales.</p><small>Try adjusting your filters.</small></div>';
+        return;
+      }
+      
+      // Results are already sorted by getFilteredSalesForDisplay
+      list.innerHTML = filtered.map(s => {
         const profit = s.sellPrice - s.cost - s.fees - s.shipping;
         const profitClass = profit >= 0 ? 'positive' : 'negative';
         const platformClass = 'platform-' + s.platform.toLowerCase().replace(' ', '-');
@@ -616,6 +882,7 @@
         'Depop': '#ff2300',
         'Mercari': '#4a90d9',
         'Facebook': '#1877f2',
+        'OfferUp': '#00ab6c',
         'Other': '#64748b'
       };
       
